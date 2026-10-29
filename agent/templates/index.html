@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniResearch | Autonomous Deep Research Agent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+    <div class="app-shell">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="/" class="brand-link">
+                    <div class="brand-icon">Ω</div>
+                    <div class="brand-title">OmniResearch</div>
+                </a>
+            </div>
+
+            <div class="sidebar-action">
+                <button class="btn-new-inquiry" onclick="startNewInquiry()">
+                    <span>+ New Research</span>
+                    <span class="kbd">Ctrl+K</span>
+                </button>
+            </div>
+
+            <div class="sidebar-content">
+                <div>
+                    <div class="sidebar-heading">Recent Inquiries</div>
+                    <ul class="inquiry-list" id="inquiry-list">
+                        <!-- Loaded from localStorage -->
+                    </ul>
+                </div>
+
+                <div>
+                    <div class="sidebar-heading">Benchmark Presets</div>
+                    <ul class="inquiry-list" id="benchmark-list">
+                        <!-- Loaded from backend -->
+                    </ul>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="status-indicator">
+                    <span class="dot"></span>
+                    <span id="status-provider">MOCK</span>
+                </div>
+                <a href="https://github.com/ommore86/AI-Research-Agent" target="_blank" style="color: inherit; text-decoration: none;">GitHub ↗</a>
+            </div>
+        </aside>
+
+        <!-- Main Workspace Canvas -->
+        <main class="canvas">
+            <!-- Topbar -->
+            <header class="topbar">
+                <div class="breadcrumbs">
+                    <a href="#">Workspaces</a>
+                    <span>/</span>
+                    <a href="#">Agent Core</a>
+                    <span>/</span>
+                    <span class="current" id="crumb-inquiry">Ready</span>
+                </div>
+
+                <div class="topbar-controls">
+                    <select class="select-input" id="provider-select">
+                        <option value="auto">Provider: Auto-Detect</option>
+                        <option value="mock">Engine: Deterministic Mock</option>
+                        <option value="gemini">Google Gemini 2.5 Flash</option>
+                        <option value="openai">OpenAI GPT-4o-mini</option>
+                    </select>
+
+                    <button class="btn-secondary" onclick="openModal()">⚙ Settings</button>
+                    <button class="btn-secondary" onclick="flushCache()">🧹 Clear Cache</button>
+                    <button class="btn-secondary" onclick="copyMarkdown()">📋 Copy MD</button>
+                </div>
+            </header>
+
+            <!-- Scrollable Body -->
+            <div class="canvas-body">
+                <div class="container">
+                    <!-- Search Omnibar Hero -->
+                    <div class="search-header">
+                        <h2 class="search-title">Investigate Complex Topics with Verifiable Sources</h2>
+                        <p class="search-subtitle">Deconstructs questions, orchestrates live web tools, filters noise, and produces structured dossiers with citations.</p>
+                    </div>
+
+                    <div class="omnibar">
+                        <textarea id="query-input" class="omnibar-textarea" placeholder="Ask a research question (e.g. Compare the top 3 open-source vector databases for a startup building RAG products)..." rows="2"></textarea>
+                        
+                        <div class="omnibar-footer">
+                            <div class="omnibar-options">
+                                <label class="checkbox-option">
+                                    <input type="checkbox" id="baseline-toggle">
+                                    <span>Compare Direct LLM Baseline</span>
+                                </label>
+                            </div>
+
+                            <button id="submit-btn" class="btn-primary" onclick="submitResearch()">
+                                <span>Synthesize Dossier</span>
+                                <span style="font-size: 0.75rem; opacity: 0.8;">↵</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Preset Chips -->
+                    <div class="presets-wrap" id="presets-wrap"></div>
+
+                    <!-- Live Real-Time SSE Stepper -->
+                    <div class="stepper-card" id="stepper-card">
+                        <div class="stepper-header">
+                            <span class="stepper-title">Autonomous Agent Pipeline Running</span>
+                            <span class="stepper-timer" id="stepper-timer">0.00s</span>
+                        </div>
+
+                        <div class="stepper-list">
+                            <div class="stepper-item" id="step-1">
+                                <div class="stepper-badge">1</div>
+                                <span>Analyzing Query & Generating Research Plan</span>
+                            </div>
+                            <div class="stepper-item" id="step-2">
+                                <div class="stepper-badge">2</div>
+                                <span>Executing Web Search & Wikipedia Retrieval</span>
+                            </div>
+                            <div class="stepper-item" id="step-3">
+                                <div class="stepper-badge">3</div>
+                                <span>Deep Content Scraping & Prompt Sanitization</span>
+                            </div>
+                            <div class="stepper-item" id="step-4">
+                                <div class="stepper-badge">4</div>
+                                <span>Filtering Low-Quality Noise & Deduplication</span>
+                            </div>
+                            <div class="stepper-item" id="step-5">
+                                <div class="stepper-badge">5</div>
+                                <span>Grounded Synthesis with Schema Validation</span>
+                            </div>
+                            <div class="stepper-item" id="step-6">
+                                <div class="stepper-badge">6</div>
+                                <span>Self-Critique & Factual Verification</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Output Results Dossier -->
+                    <div class="results-wrap" id="results-wrap">
+                        <div class="dossier-grid">
+                            <!-- Main Report -->
+                            <article class="dossier-main">
+                                <div class="dossier-meta">
+                                    <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--cyan-500); font-weight: 700;">Research Dossier</span>
+                                    <div class="confidence-pill confidence-High" id="report-confidence">High Confidence</div>
+                                </div>
+
+                                <h2 class="report-title" id="report-question"></h2>
+
+                                <!-- Executive Summary -->
+                                <div class="summary-card">
+                                    <div class="summary-heading">Executive Summary</div>
+                                    <div class="summary-text" id="report-summary"></div>
+                                </div>
+
+                                <!-- Key Findings -->
+                                <div class="section-label">Key Findings & Grounded Citations</div>
+                                <div class="findings-list" id="findings-list"></div>
+
+                                <!-- Limitations -->
+                                <div class="callout-box callout-limitations">
+                                    <h4>Methodological Limitations & Assumptions</h4>
+                                    <ul id="limitations-list"></ul>
+                                </div>
+
+                                <!-- Next Steps -->
+                                <div class="callout-box callout-nextsteps">
+                                    <h4>Recommended Next Steps</h4>
+                                    <ol id="steps-list"></ol>
+                                </div>
+
+                                <!-- Baseline Contrast -->
+                                <div id="baseline-wrap" style="display: none;">
+                                    <div class="section-label">Empirical Contrast: Agentic vs. Raw LLM Baseline</div>
+                                    <div class="baseline-section">
+                                        <div class="baseline-header-text">Raw LLM Output (Un-Grounded Baseline)</div>
+                                        <div class="baseline-raw-text" id="baseline-text"></div>
+                                    </div>
+                                </div>
+                            </article>
+
+                            <!-- Aside: Sources & Telemetry -->
+                            <aside class="dossier-aside">
+                                <div class="panel-card">
+                                    <div class="panel-title">
+                                        <span>Verified Sources</span>
+                                        <span id="sources-count" style="color: var(--cyan-500);">0 Verified</span>
+                                    </div>
+                                    <div class="sources-container" id="sources-container"></div>
+                                </div>
+
+                                <div class="panel-card">
+                                    <div class="panel-title">Observability Telemetry</div>
+                                    <div id="telemetry-box"></div>
+                                </div>
+                            </aside>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-backdrop" id="settings-modal">
+        <div class="modal-body">
+            <div class="modal-title-row">
+                <h3 class="modal-title">Settings & Credentials</h3>
+                <button class="btn-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="field-group">
+                <label>Active Engine</label>
+                <select class="field-control" id="modal-provider">
+                    <option value="auto">Auto-Detect Available Credentials</option>
+                    <option value="mock">Deterministic Mock (Fast & Free)</option>
+                    <option value="gemini">Google Gemini 2.5 Flash</option>
+                    <option value="openai">OpenAI GPT-4o-mini</option>
+                </select>
+            </div>
+            <div class="field-group">
+                <label>Google Gemini API Key (Optional)</label>
+                <input type="password" id="modal-gemini" class="field-control" placeholder="AIzaSy...">
+            </div>
+            <div class="field-group">
+                <label>OpenAI API Key (Optional)</label>
+                <input type="password" id="modal-openai" class="field-control" placeholder="sk-...">
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem;">
+                <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn-primary" onclick="saveSettings()">Save & Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-notice" id="toast">Operation completed.</div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
